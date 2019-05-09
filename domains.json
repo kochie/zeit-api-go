@@ -1,0 +1,155 @@
+[
+	{
+		"id": "QmPurcpCqrAm6qATgx9TEL7yPSU6krfomVYRdmsHLXf9ts",
+		"name": "kochie.io",
+		"serviceType": "external",
+		"nsVerifiedAt": null,
+		"txtVerifiedAt": "2018-11-30T04:58:14.865+08:00",
+		"cdnEnabled": false,
+		"createdAt": "2018-09-04T08:51:23.689+08:00",
+		"expiresAt": null,
+		"boughtAt": null,
+		"VerifiedRecord": "",
+		"verified": true,
+		"nameservers": [
+			"lara.ns.cloudflare.com",
+			"alexis.ns.cloudflare.com"
+		],
+		"intendedNameservers": [
+			"a.zeit-world.org",
+			"c.zeit-world.net",
+			"d.zeit-world.co.uk",
+			"e.zeit-world.com"
+		],
+		"creator": {
+			"id": "TEKzBJxt0YWtMpQPOaOuCXMI",
+			"username": "kochie",
+			"email": "zeit@robert.kochie.io",
+			"customerId": "cus_BzhJm0jCfm76UV"
+		}
+	},
+	{
+		"id": "QmR2eYJfQkVNYqYxHxEs8Qte3h4GpXdRbRpz6Wa8uYYu1p",
+		"name": "guardianssh.stream",
+		"serviceType": "zeit.world",
+		"nsVerifiedAt": null,
+		"txtVerifiedAt": null,
+		"cdnEnabled": false,
+		"createdAt": "2018-01-29T07:39:24.611+08:00",
+		"expiresAt": null,
+		"boughtAt": null,
+		"VerifiedRecord": "",
+		"verified": true,
+		"nameservers": [
+			"d.zeit.world",
+			"e.zeit.world",
+			"c.zeit.world",
+			"a.zeit.world",
+			"b.zeit.world",
+			"f.zeit.world"
+		],
+		"intendedNameservers": [
+			"a.zeit-world.co.uk",
+			"b.zeit-world.com",
+			"c.zeit-world.org",
+			"f.zeit-world.net"
+		],
+		"creator": {
+			"id": "TEKzBJxt0YWtMpQPOaOuCXMI",
+			"username": "kochie",
+			"email": "zeit@robert.kochie.io",
+			"customerId": "cus_BzhJm0jCfm76UV"
+		}
+	},
+	{
+		"id": "QmcammzDMLrbg3oYgkLxhnaDFfEV4hYFbzJgbFrsY1BiUi",
+		"name": "kochie.download",
+		"serviceType": "zeit.world",
+		"nsVerifiedAt": null,
+		"txtVerifiedAt": null,
+		"cdnEnabled": false,
+		"createdAt": "2018-01-04T13:22:27.549+08:00",
+		"expiresAt": null,
+		"boughtAt": null,
+		"VerifiedRecord": "",
+		"verified": true,
+		"nameservers": [
+			"c.zeit.world",
+			"b.zeit.world",
+			"a.zeit.world",
+			"d.zeit.world",
+			"f.zeit.world",
+			"e.zeit.world"
+		],
+		"intendedNameservers": [
+			"a.zeit-world.org",
+			"b.zeit-world.com",
+			"c.zeit-world.net",
+			"d.zeit-world.co.uk"
+		],
+		"creator": {
+			"id": "TEKzBJxt0YWtMpQPOaOuCXMI",
+			"username": "kochie",
+			"email": "zeit@robert.kochie.io",
+			"customerId": "cus_BzhJm0jCfm76UV"
+		}
+	},
+	{
+		"id": "QmcAK7RxjMsh4RtPhvz7bKkQ5yi1vjjkj9eXTY1uquyJYt",
+		"name": "kochie.space",
+		"serviceType": "external",
+		"nsVerifiedAt": null,
+		"txtVerifiedAt": "2019-03-29T10:58:12.967+08:00",
+		"cdnEnabled": false,
+		"createdAt": "2018-01-02T21:34:00.466+08:00",
+		"expiresAt": null,
+		"boughtAt": null,
+		"VerifiedRecord": "",
+		"verified": true,
+		"nameservers": [
+			"alexis.ns.cloudflare.com",
+			"lara.ns.cloudflare.com"
+		],
+		"intendedNameservers": [
+			"a.zeit-world.com",
+			"b.zeit-world.net",
+			"c.zeit-world.org",
+			"e.zeit-world.co.uk"
+		],
+		"creator": {
+			"id": "TEKzBJxt0YWtMpQPOaOuCXMI",
+			"username": "kochie",
+			"email": "zeit@robert.kochie.io",
+			"customerId": "cus_BzhJm0jCfm76UV"
+		}
+	},
+	{
+		"id": "Qmdo7P1czRQkt4zKHD2C7aeegRKFfoFe8VF3yrGWmRMf6P",
+		"name": "kochie.today",
+		"serviceType": "external",
+		"nsVerifiedAt": null,
+		"txtVerifiedAt": null,
+		"cdnEnabled": false,
+		"createdAt": "2017-12-22T12:14:50.693+08:00",
+		"expiresAt": null,
+		"boughtAt": null,
+		"VerifiedRecord": "",
+		"verified": true,
+		"nameservers": [
+			"lara.ns.cloudflare.com",
+			"alexis.ns.cloudflare.com"
+		],
+		"intendedNameservers": [
+			"a.zeit-world.net",
+			"b.zeit-world.co.uk",
+			"d.zeit-world.org",
+			"f.zeit-world.com"
+		],
+		"creator": {
+			"id": "TEKzBJxt0YWtMpQPOaOuCXMI",
+			"username": "kochie",
+			"email": "zeit@robert.kochie.io",
+			"customerId": "cus_BzhJm0jCfm76UV"
+		}
+	}
+]
