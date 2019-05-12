@@ -1,6 +1,6 @@
 # ZEIT API
 [![Build Status](https://travis-ci.com/kochie/zeit-api-go.svg?token=DyduaqJxsshHLt3JzTx3&branch=master)](https://travis-ci.com/kochie/zeit-api-go)
-
+[![GoDoc](https://godoc.org/github.com/kochie/zeit-api-go?status.svg)](https://godoc.org/github.com/kochie/zeit-api-go)
 ```
 go get github.com/kochie/zeit-api-go
 ```
