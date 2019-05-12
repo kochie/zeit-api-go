@@ -1,4 +1,4 @@
-package zeit_api_go
+package zeit
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 )
 
 func TestClient_ListDNSRecords(t *testing.T) {
-	client := NewClient(TestToken, "")
+	client := NewClient(TestToken)
 	a := assert.New(t)
 
 	testDomains := []string{
@@ -23,4 +23,12 @@ func TestClient_ListDNSRecords(t *testing.T) {
 			fmt.Println(client.rateLimit.reset)
 		})
 	}
+}
+
+func TestClient_CreateDNSRecord(t *testing.T) {
+
+}
+
+func TestClient_RemoveDNSRecord(t *testing.T) {
+
 }

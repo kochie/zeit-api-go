@@ -1,4 +1,4 @@
-package zeit_api_go
+package zeit
 
 const (
 	RecordTypeA     = "A"

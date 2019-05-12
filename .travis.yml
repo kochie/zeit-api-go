@@ -2,3 +2,7 @@ language: go
 
 go:
   - master
+
+script:
+  - go test -v -covermode=count -coverprofile=coverage.out -tags integration
+  - $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN

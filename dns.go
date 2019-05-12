@@ -1,4 +1,4 @@
-package zeit_api_go
+package zeit
 
 import (
 	"bytes"
@@ -16,6 +16,10 @@ func (c Client) ListDNSRecords(domain string) ([]Record, error) {
 		return nil, err
 	}
 	defer closeResponseBody(resp)
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New(resp.Status)
+	}
 
 	records := struct {
 		Records []Record `json:"records"`

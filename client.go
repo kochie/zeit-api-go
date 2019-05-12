@@ -1,4 +1,4 @@
-package zeit_api_go
+package zeit
 
 import (
 	"fmt"
@@ -17,11 +17,17 @@ type rateLimit struct {
 type Client struct {
 	token      string
 	rootUrl    string
-	httpClient *http.Client
+	httpClient HttpClient
 	rateLimit  *rateLimit
 	team       string
 }
 
+type HttpClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
+// NewClient will create a new zeit client to apply api request to. Note that the team is defaulted to nothing, if you
+// want to update the team then use Team.
 func NewClient(token string) *Client {
 	rl := rateLimit{1, 1, time.Now()}
 	return &Client{
@@ -33,11 +39,13 @@ func NewClient(token string) *Client {
 	}
 }
 
-// Team will set the team associated with the api client
+// Team will set the team associated with the api client, to not use a team set with empty string.
 func (c Client) Team(team string) {
 	c.team = team
 }
 
+// closeResponseBody is a helper function to close the body of a http response and panic if there is an error closing
+// the io writer.
 func closeResponseBody(resp *http.Response) {
 	if err := resp.Body.Close(); err != nil {
 		panic("http response couldn't be closed")
@@ -57,6 +65,14 @@ func (c Client) makeAndDoRequest(httpMethod, endpoint string, body io.Reader) (*
 	}
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.token))
 
+	// if team is defined, add it to the url query
+	if c.team != "" {
+		q := req.URL.Query()
+		q.Add("teamId", c.team)
+		req.URL.RawQuery = q.Encode()
+	}
+
+	// do a check to see if the rate limit has been hit, if so wait until a request can be sent again
 	if c.rateLimit.remaining == 0 && time.Now().Before(c.rateLimit.reset) {
 		d := time.Now().Sub(c.rateLimit.reset)
 		fmt.Println(fmt.Sprintf("Zeit rate limit hit, waiting for %f seconds", d.Seconds()))
@@ -67,7 +83,7 @@ func (c Client) makeAndDoRequest(httpMethod, endpoint string, body io.Reader) (*
 	if err != nil {
 		return nil, err
 	}
-	c.rateLimit.remaining--
+	c.rateLimit.remaining-- // in-case there are multiple threads
 
 	if remaining, err := strconv.Atoi(resp.Header.Get("X-RateLimit-remaining")); err != nil {
 		c.rateLimit.remaining = remaining
