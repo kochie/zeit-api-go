@@ -65,19 +65,12 @@ func TestClient_AddDomain(t *testing.T) {
 	}{testDomains})
 	a.Nil(err)
 
-	header := http.Header{}
-	header.Set("X-RateLimit-remaining","10")
-	header.Set("X-RateLimit-limit","10")
-	header.Set("X-RateLimit-reset","0")
-
-	httpResponse := http.Response{
-		Header: header,
-		Body: ioutil.NopCloser(bytes.NewBuffer(response)),
-		StatusCode: http.StatusOK,
-	}
+	httpResponse1 := makeResponse(response)
+	httpResponse2 := makeResponse(response)
 
 	mockHttpClient := mocks.NewMockHttpClient(ctrl)
-	mockHttpClient.EXPECT().Do(gomock.Any()).Return(&httpResponse, nil)
+	mockHttpClient.EXPECT().Do(gomock.Any()).Return(&httpResponse1, nil)
+	mockHttpClient.EXPECT().Do(gomock.Any()).Return(&httpResponse2, nil)
 
 	client := Client{
 		TestToken,
@@ -100,6 +93,19 @@ func TestClient_AddDomain(t *testing.T) {
 		})
 	}
 
+}
+
+func makeResponse(response []byte) http.Response {
+	header := http.Header{}
+	header.Set("X-RateLimit-remaining", "10")
+	header.Set("X-RateLimit-limit", "10")
+	header.Set("X-RateLimit-reset", "0")
+	httpResponse := http.Response{
+		Header:     header,
+		Body:       ioutil.NopCloser(bytes.NewBuffer(response)),
+		StatusCode: http.StatusOK,
+	}
+	return httpResponse
 }
 
 func TestClient_TransferInDomain(t *testing.T) {

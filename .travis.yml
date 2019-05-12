@@ -3,6 +3,9 @@ language: go
 go:
   - master
 
+#before_install:
+#  - go get github.com/mattn/goveralls
+
 script:
   - go test -v -covermode=count -coverprofile=coverage.out -tags integration
-  - $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
+  - goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
