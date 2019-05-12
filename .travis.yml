@@ -3,8 +3,8 @@ language: go
 go:
   - master
 
-#before_install:
-#  - go get github.com/mattn/goveralls
+before_install:
+  - go get github.com/mattn/goveralls
 
 script:
   - go test -v -covermode=count -coverprofile=coverage.out -tags integration
