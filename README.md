@@ -1,7 +1,7 @@
 # ZEIT API
 [![Build Status](https://travis-ci.com/kochie/zeit-api-go.svg?token=DyduaqJxsshHLt3JzTx3&branch=master)](https://travis-ci.com/kochie/zeit-api-go)
 [![GoDoc](https://godoc.org/github.com/kochie/zeit-api-go?status.svg)](https://godoc.org/github.com/kochie/zeit-api-go)
-[![Coverage Status](https://coveralls.io/repos/github/kochie/zeit-api-go/badge.svg?t=x1hhSe)](https://coveralls.io/github/kochie/zeit-api-go)
+[![Coverage Status](https://coveralls.io/repos/github/kochie/zeit-api-go/badge.svg?branch=master)](https://coveralls.io/github/kochie/zeit-api-go?branch=master)
 ```bash
 go get github.com/kochie/zeit-api-go
 ```
