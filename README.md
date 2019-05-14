@@ -2,7 +2,7 @@
 [![Build Status](https://travis-ci.com/kochie/zeit-api-go.svg?token=DyduaqJxsshHLt3JzTx3&branch=master)](https://travis-ci.com/kochie/zeit-api-go)
 [![GoDoc](https://godoc.org/github.com/kochie/zeit-api-go?status.svg)](https://godoc.org/github.com/kochie/zeit-api-go)
 [![Coverage Status](https://coveralls.io/repos/github/kochie/zeit-api-go/badge.svg?t=x1hhSe)](https://coveralls.io/github/kochie/zeit-api-go)
-```
+```bash
 go get github.com/kochie/zeit-api-go
 ```
 
@@ -18,10 +18,10 @@ import (
 func main(){
 	token := "secret token"
 	
-	client := zeit.NewClient(token)
-	client.Team("team name")
+	zeitClient := zeit.NewClient(token)
+	zeitClient.Team("team name") // Team name can be optionally set
 	
-	domains, err :=client.GetAllDomains()
+	domains, err := zeitClient.GetAllDomains()
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -33,9 +33,10 @@ func main(){
 ```
 
 ## Testing
-Mocks can be created using the `go generate` command
-```
-go generate
+Each method should have sufficient test coverage and an integration test. To facillitate the development of tests there is a mocking interface set up which can be used. Mocks can be created using the `go generate` command or by using the `mockgen` command.
+```bash
+# Example mocking of HttpClient
+mockgen -destination=mocks/mock_http_client.go -package=mocks github.com/kochie/zeit-api-go HttpClient
 ```
 
 Integration tests will not run unless the `integration` flag is set.
@@ -44,9 +45,12 @@ Integration tests will not run unless the `integration` flag is set.
 go test -tags integration
 ```
 
+More information about setting up a development environment can be found in the [contribution guide](./CONTRIBUTING.md).
+
 ## APIs
 As listed in the [API documentation](https://zeit.co/docs/api)
 
+Currently supported endpoints are.
 - [x] Domains
 - [x] DNS
 - [ ] OAuth2
