@@ -22,6 +22,8 @@ type Client struct {
 	team       string
 }
 
+//go:generate mockgen -destination=mocks/mock_http_client.go -package=mocks github.com/kochie/zeit-api-go HttpClient
+
 type HttpClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
