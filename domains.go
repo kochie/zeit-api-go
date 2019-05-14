@@ -67,7 +67,8 @@ type VerificationError struct {
 	} `json:"txtVerification"`
 }
 
-func (c Client) GetAllDomains() ([]Domain, error) {
+// GetAllDomains will return a slice of domains registered with the user.
+func (c Client) ListAllDomains() ([]Domain, error) {
 	resp, err := c.makeAndDoRequest(http.MethodGet, "v4/domains", nil)
 	if err != nil {
 		return nil, err
@@ -86,6 +87,7 @@ func (c Client) GetAllDomains() ([]Domain, error) {
 	return domains.Domains, nil
 }
 
+// AddDomain will add a specified domain name to ZEIT, either as an external or internal domain.
 func (c Client) AddDomain(name string) (*Domain, error) {
 	parameters := struct {
 		Name string `json:"name"`
@@ -111,13 +113,14 @@ func (c Client) AddDomain(name string) (*Domain, error) {
 	return &domain, nil
 }
 
-func (c Client) TransferInDomain(method, name, authCode string, expectedPrice int) (*Domain, error) {
+// TransferInDomain will initiate a domain transfer request from an external Registrar to ZEIT.
+func (c Client) TransferInDomain(name, authCode string, expectedPrice int) (*Domain, error) {
 	parameters := struct {
 		Method        string `json:"method"`
 		Name          string `json:"name"`
 		AuthCode      string `json:"authCode"`
 		ExpectedPrice int    `json:"expectedPrice"`
-	}{method, name, authCode, expectedPrice}
+	}{"transfer-in", name, authCode, expectedPrice}
 	body, err := json.Marshal(parameters)
 	if err != nil {
 		return nil, err
@@ -139,6 +142,8 @@ func (c Client) TransferInDomain(method, name, authCode string, expectedPrice in
 	return &domain, nil
 }
 
+// VerifyDomain will check if the domain either has the correct nameservers for ZEIT defined or if the DNS TXT
+// verification is set.
 func (c Client) VerifyDomain(name string) (*Domain, *VerificationError, error) {
 	endpoint := fmt.Sprintf("v4/domains/%s/verify", name)
 	resp, err := c.makeAndDoRequest(http.MethodPost, endpoint, nil)
@@ -160,6 +165,7 @@ func (c Client) VerifyDomain(name string) (*Domain, *VerificationError, error) {
 	return verification.Domain, verification.Error, nil
 }
 
+// GetDomain will return specific information for one domain.
 func (c Client) GetDomain(name string) (*Domain, *GetError, error) {
 	endpoint := fmt.Sprintf("v4/domains/%s", name)
 	resp, err := c.makeAndDoRequest(http.MethodGet, endpoint, nil)
@@ -181,6 +187,7 @@ func (c Client) GetDomain(name string) (*Domain, *GetError, error) {
 	return verification.Domain, verification.Error, nil
 }
 
+// RemoveDomain will remove a domain from the ZEIT DNS server.
 func (c Client) RemoveDomain(name string) (string, error) {
 	endpoint := fmt.Sprintf("v4/domains/%s", name)
 	resp, err := c.makeAndDoRequest(http.MethodDelete, endpoint, nil)
@@ -200,6 +207,7 @@ func (c Client) RemoveDomain(name string) (string, error) {
 	return response.Uid, nil
 }
 
+// CheckDomainAvailability will check if the specified domain is available for sale.
 func (c Client) CheckDomainAvailability(name string) (bool, error) {
 	endpoint := fmt.Sprintf("v4/domains/status?%s", name)
 	resp, err := c.makeAndDoRequest(http.MethodGet, endpoint, nil)
@@ -219,6 +227,7 @@ func (c Client) CheckDomainAvailability(name string) (bool, error) {
 	return response.Available, nil
 }
 
+// CheckDomainPrice will check how much a domain will cost to purchase and will return the price and period of purchase.
 func (c Client) CheckDomainPrice(name string) (int, int, error) {
 	endpoint := fmt.Sprintf("v4/domains/price?%s", name)
 	resp, err := c.makeAndDoRequest(http.MethodGet, endpoint, nil)
@@ -239,6 +248,7 @@ func (c Client) CheckDomainPrice(name string) (int, int, error) {
 	return response.Price, response.Period, nil
 }
 
+// BuyDomain will buy a domain name at the expectedPrice.
 func (c Client) BuyDomain(name string, expectedPrice int) error {
 	parameters := struct {
 		Name          string `json:"name"`
@@ -254,14 +264,6 @@ func (c Client) BuyDomain(name string, expectedPrice int) error {
 	}
 	if resp.StatusCode != http.StatusOK {
 		return errors.New(resp.Status)
-	}
-	response := struct {
-		Price  int
-		Period int
-	}{}
-	err = json.NewDecoder(resp.Body).Decode(&response)
-	if err != nil {
-		return err
 	}
 	return nil
 }

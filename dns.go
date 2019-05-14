@@ -64,7 +64,7 @@ func (c Client) CreateDNSRecord(domain, name, recordType, value string) (string,
 }
 
 func (c Client) RemoveDNSRecord(domain, recId string) error {
-	endpoint := fmt.Sprintf("v2/domains/%s/records", domain)
+	endpoint := fmt.Sprintf("v2/domains/%s/records/%s", domain, recId)
 	resp, err := c.makeAndDoRequest(http.MethodDelete, endpoint, nil)
 
 	defer closeResponseBody(resp)

@@ -33,10 +33,10 @@ func TestClient_Integration_CreateDNSRecord(t *testing.T) {
 		"test.com",
 	}
 
-	records := []struct{
-		name string
+	records := []struct {
+		name       string
 		recordType string
-		value string
+		value      string
 	}{
 		{"@", RecordTypeA, "1.1.1.1"},
 		{"@", RecordTypeAAAA, "1::1"},
