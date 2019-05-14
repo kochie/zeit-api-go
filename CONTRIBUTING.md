@@ -13,4 +13,4 @@ git remote rename origin upstream
 git remote add origin https://github.com/[username]/zeit-api-go
 ```
 
-Also please run `golint`, `gofmt`, and `go test` before submitting a pull request. It might be usefult to create a git hook for this.
+Also please run `golint`, `gofmt`, and `go test` before submitting a pull request. It might be useful to create a git hook for this.
