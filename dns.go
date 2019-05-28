@@ -81,8 +81,6 @@ func (c Client) CreateDNSRecord(domain string, record *Record) (string, interfac
 			return "", nil, jsonError
 		}
 		log.Println(resp.Status, record.Name, record.Type, record.GetValue())
-		r, _ := json.Marshal(&parameters)
-		log.Println(string(r))
 		return "", &conflictError, err
 	}
 

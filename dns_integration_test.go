@@ -64,7 +64,6 @@ func TestClient_Integration_CreateDNSRecord(t *testing.T) {
 				expectedRecord := record
 				for _, actualRecord := range actualRecords {
 					if actualRecord.Id == uuid {
-						//a.Equal(expectedRecord, actualRecord, "records do not match")
 						a.Equal(expectedRecord.Name, actualRecord.Name, "Record names should match")
 						a.Equal(expectedRecord.Type, actualRecord.Type, "Record type should match")
 						a.Equal(expectedRecord.GetValue(), actualRecord.GetValue(), "Record value should match")
