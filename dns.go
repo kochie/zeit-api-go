@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -21,46 +22,84 @@ func (c Client) ListDNSRecords(domain string) ([]Record, error) {
 		return nil, errors.New(resp.Status)
 	}
 
-	records := struct {
-		Records []Record `json:"records"`
-	}{}
+	var records []Record
 
-	err = json.NewDecoder(resp.Body).Decode(&records)
+	err = json.NewDecoder(resp.Body).Decode(&struct {
+		Records *[]Record
+	}{&records})
 	if err != nil {
 		return nil, err
 	}
 
-	return records.Records, nil
+	return records, nil
 }
 
-func (c Client) CreateDNSRecord(domain, name, recordType, value string) (string, error) {
+func (c Client) CreateDNSRecord(domain string, record *Record) (string, interface{}, error) {
+	if record == nil {
+		return "", nil, errors.New(ErrorNilRecord)
+	}
+
+	if record.Name == "@" {
+		return "", nil, errors.New(ErrorOrigin)
+	}
+
 	parameters := struct {
 		Name       string `json:"name"`
 		RecordType string `json:"type"`
 		Value      string `json:"value"`
-	}{name, recordType, value}
+	}{record.Name, record.Type, record.GetValue()}
+
 	body, err := json.Marshal(parameters)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
+
 	endpoint := fmt.Sprintf("v2/domains/%s/records", domain)
 	resp, err := c.makeAndDoRequest(http.MethodPost, endpoint, bytes.NewBuffer(body))
-
 	defer closeResponseBody(resp)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
+
+	if resp.StatusCode == http.StatusBadRequest {
+		requestError := BasicError{}
+		jsonError := json.NewDecoder(resp.Body).Decode(&struct {
+			Error *BasicError
+		}{&requestError})
+		if jsonError != nil {
+			return "", nil, jsonError
+		}
+		return "", &requestError, err
+	}
+
+	if resp.StatusCode == http.StatusConflict {
+		conflictError := ConflictError{}
+		jsonError := json.NewDecoder(resp.Body).Decode(&struct {
+			Error *ConflictError
+		}{&conflictError})
+		if jsonError != nil {
+			return "", nil, jsonError
+		}
+		log.Println(resp.Status, record.Name, record.Type, record.GetValue())
+		r, _ := json.Marshal(&parameters)
+		log.Println(string(r))
+		return "", &conflictError, err
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		return "", errors.New(resp.Status)
+		return "", nil, errors.New(resp.Status)
 	}
-	record := struct {
-		Uid string
-	}{}
-	err = json.NewDecoder(resp.Body).Decode(&record)
+
+	var uid string
+	err = json.NewDecoder(resp.Body).Decode(&struct {
+		Uid *string
+	}{&uid})
+
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
-	return record.Uid, nil
+
+	return uid, nil, nil
 }
 
 func (c Client) RemoveDNSRecord(domain, recId string) error {

@@ -56,30 +56,31 @@ func TestClient_CreateDNSRecord(t *testing.T) {
 
 	mockHttpClient := mocks.NewMockHttpClient(ctrl)
 
-	domainNames := map[string]struct {
-		Name       string
-		RecordType string
-		Value      string
-		Uid        string
-	}{
+	domainNames := map[string]*Record{
 		"test.com": {
-			"@",
-			"CNAME",
-			"test.com",
-			"12345",
+			Name:  "",
+			Type:  RecordTypeCNAME,
+			Value: "test.com",
+			Id:    "123456",
 		},
 		"www.test.com": {
-			"@",
-			"CNAME",
-			"test.com",
-			"12345",
+			Name:  "",
+			Type:  RecordTypeCNAME,
+			Value: "test.com",
+			Id:    "123456",
+		},
+		"test.com.au": {
+			Name:  "foo",
+			Type:  RecordTypeCNAME,
+			Value: "test.com",
+			Id:    "123456",
 		},
 	}
 
 	for domainName, record := range domainNames {
 		response, err := json.Marshal(&struct {
 			Uid string `json:"uid"`
-		}{record.Uid})
+		}{record.Id})
 		a.Nil(err)
 
 		httpResponse := makeResponse(response)
@@ -94,10 +95,60 @@ func TestClient_CreateDNSRecord(t *testing.T) {
 		}
 
 		t.Run(domainName, func(t *testing.T) {
-			uid, err := client.CreateDNSRecord(domainName, record.Name, record.RecordType, record.Value)
+			uid, conflictError, err := client.CreateDNSRecord(domainName, record)
 			a.Nil(err, "Error should be nil")
+			a.Nil(conflictError, "Should not have a conflict")
 			a.NotNil(uid, "uid should be defined")
-			a.Equal(record.Uid, uid, "uid should be the same")
+			a.Equal(record.Id, uid, "uid should be the same")
+		})
+	}
+
+	incorrectDomainRecords := []struct {
+		origin      string
+		record      *Record
+		errorString string
+		mock        bool
+	}{
+		{"test.com", &Record{
+			Name:  "@",
+			Type:  RecordTypeCNAME,
+			Value: "test.com",
+			Id:    "123456",
+		}, ErrorOrigin, false},
+		{"www.test.com", &Record{
+			Name:  "@",
+			Type:  RecordTypeCNAME,
+			Value: "test.com",
+			Id:    "123456",
+		}, ErrorOrigin, false},
+		{"test.com", nil, ErrorNilRecord, false},
+		{"www.test.com", nil, ErrorNilRecord, false},
+	}
+
+	for _, incorrectDomain := range incorrectDomainRecords {
+		if incorrectDomain.mock {
+			response, err := json.Marshal(&struct {
+				Uid string `json:"uid"`
+			}{incorrectDomain.record.Id})
+			a.Nil(err)
+
+			httpResponse := makeResponse(response)
+			mockHttpClient.EXPECT().Do(gomock.Any()).Return(&httpResponse, nil)
+		}
+
+		client := Client{
+			TestToken,
+			rootUrl,
+			mockHttpClient,
+			&rateLimit{},
+			"",
+		}
+
+		t.Run(incorrectDomain.origin, func(t *testing.T) {
+			uid, conflictError, err := client.CreateDNSRecord(incorrectDomain.origin, incorrectDomain.record)
+			a.Error(err, incorrectDomain.errorString)
+			a.Nil(conflictError, "Should not have a conflict")
+			a.Empty(uid, "uid should be empty")
 		})
 	}
 }

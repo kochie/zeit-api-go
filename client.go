@@ -1,10 +1,13 @@
 package zeit
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -12,6 +15,7 @@ type rateLimit struct {
 	limit     int
 	remaining int
 	reset     time.Time
+	mutex     sync.Mutex
 }
 
 type Client struct {
@@ -22,6 +26,8 @@ type Client struct {
 	team       string
 }
 
+var rateLimits = make(map[string]*rateLimit)
+
 //go:generate mockgen -destination=mocks/mock_http_client.go -package=mocks github.com/kochie/zeit-api-go HttpClient
 
 type HttpClient interface {
@@ -31,12 +37,17 @@ type HttpClient interface {
 // NewClient will create a new zeit client to apply api request to. Note that the team is defaulted to nothing, if you
 // want to update the team then use Team.
 func NewClient(token string) *Client {
-	rl := rateLimit{1, 1, time.Now()}
+	var rl *rateLimit
+	if val, ok := rateLimits[token]; ok {
+		rl = val
+	} else {
+		rl = &rateLimit{1, 1, time.Now(), sync.Mutex{}}
+	}
 	return &Client{
 		token,
 		"https://api.zeit.co",
 		&http.Client{},
-		&rl,
+		rl,
 		"",
 	}
 }
@@ -73,29 +84,59 @@ func (c Client) makeAndDoRequest(httpMethod, endpoint string, body io.Reader) (*
 		q.Add("teamId", c.team)
 		req.URL.RawQuery = q.Encode()
 	}
+	mutex := c.rateLimit.mutex
 
 	// do a check to see if the rate limit has been hit, if so wait until a request can be sent again
-	if c.rateLimit.remaining == 0 && time.Now().Before(c.rateLimit.reset) {
-		d := time.Now().Sub(c.rateLimit.reset)
-		fmt.Println(fmt.Sprintf("Zeit rate limit hit, waiting for %f seconds", d.Seconds()))
+doRequest:
+	mutex.Lock()
+	remaining := c.rateLimit.remaining
+	reset := c.rateLimit.reset
+	mutex.Unlock()
+	now := time.Now()
+	if remaining == 0 && now.Before(reset) {
+		d := reset.Sub(now)
+		log.Printf("Zeit rate limit hit, waiting for %s", d.String())
 		time.Sleep(d)
 	}
-
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	c.rateLimit.remaining-- // in-case there are multiple threads
 
-	if remaining, err := strconv.Atoi(resp.Header.Get("X-RateLimit-remaining")); err != nil {
-		c.rateLimit.remaining = remaining
+	if resp.StatusCode == http.StatusTooManyRequests {
+		rateLimitError := RateLimitError{}
+		err := json.NewDecoder(resp.Body).Decode(&struct {
+			Error *RateLimitError `json:"error"`
+		}{&rateLimitError})
+		if err != nil {
+			return nil, err
+		}
+		mutex.Lock()
+		c.rateLimit.remaining = rateLimitError.Limit.Remaining
+		c.rateLimit.reset = time.Unix(rateLimitError.Limit.Reset, 0)
+		c.rateLimit.limit = rateLimitError.Limit.Total
+		mutex.Unlock()
+
+		goto doRequest
 	}
-	if limit, err := strconv.Atoi(resp.Header.Get("X-RateLimit-limit")); err != nil {
-		c.rateLimit.limit = limit
+
+	mutex.Lock()
+	if RateLimitRemaining := resp.Header.Get("X-RateLimit-Remaining"); RateLimitRemaining != "" {
+		if remaining, err := strconv.ParseInt(RateLimitRemaining, 10, 32); err != nil {
+			c.rateLimit.remaining = int(remaining)
+		}
 	}
-	if reset, err := strconv.Atoi(resp.Header.Get("X-RateLimit-reset")); err != nil {
-		c.rateLimit.reset = time.Unix(int64(reset), 0)
+	if RateLimitLimit := resp.Header.Get("X-RateLimit-Limit"); RateLimitLimit != "" {
+		if limit, err := strconv.ParseInt(RateLimitLimit, 10, 32); err != nil {
+			c.rateLimit.limit = int(limit)
+		}
 	}
+	if RateLimitReset := resp.Header.Get("X-RateLimit-Reset"); RateLimitReset != "" {
+		if reset, err := strconv.ParseInt(RateLimitReset, 10, 64); err != nil {
+			c.rateLimit.reset = time.Unix(reset, 0)
+		}
+	}
+	mutex.Unlock()
 
 	return resp, nil
 }

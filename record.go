@@ -1,5 +1,10 @@
 package zeit
 
+import (
+	"fmt"
+	"strings"
+)
+
 const (
 	RecordTypeA     = "A"
 	RecordTypeAAAA  = "AAAA"
@@ -12,12 +17,33 @@ const (
 )
 
 type Record struct {
-	Id      string
-	Slug    string
-	Type    string
-	Name    string
-	Value   string
-	Creator string
-	Created *Time
-	Updated *Time
+	Id          string
+	Slug        string
+	Type        string
+	Name        string
+	Value       string
+	Creator     string
+	Created     *Time
+	Updated     *Time
+	MxPriority  string `json:"mxPriority,omitempty"`
+	SrvPriority string `json:"priority,omitempty"`
+}
+
+func (r *Record) GetValue() string {
+	switch r.Type {
+	case RecordTypeSRV:
+		{
+			return fmt.Sprintf("%s %s", r.SrvPriority, r.Value)
+		}
+	case RecordTypeMX:
+		{
+			return fmt.Sprintf("%s %s", r.MxPriority, r.Value)
+		}
+	case RecordTypeALIAS:
+		{
+			return strings.TrimSuffix(r.Value, ".")
+		}
+	default:
+		return r.Value
+	}
 }

@@ -47,26 +47,6 @@ type Domain struct {
 	Certs               []Certs   `json:"certs,omitempty"`
 }
 
-type GetError struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
-	Name    string `json:"name"`
-}
-
-type VerificationError struct {
-	GetError
-	NsVerification struct {
-		Name                string   `json:"name"`
-		Nameservers         []string `json:"nameservers"`
-		IntendedNameservers []string `json:"intendedNameservers"`
-	} `json:"nsVerification"`
-	TxtVerification struct {
-		Name               string   `json:"name"`
-		Values             []string `json:"values"`
-		VerificationRecord string   `json:"verificationRecord"`
-	} `json:"txtVerification"`
-}
-
 // GetAllDomains will return a slice of domains registered with the user.
 func (c Client) ListAllDomains() ([]Domain, error) {
 	resp, err := c.makeAndDoRequest(http.MethodGet, "v4/domains", nil)
@@ -152,17 +132,20 @@ func (c Client) VerifyDomain(name string) (*Domain, *VerificationError, error) {
 		return nil, nil, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, nil, errors.New(resp.Status)
+		verificationError := VerificationError{}
+		err := json.NewDecoder(resp.Body).Decode(&struct {
+			Error VerificationError
+		}{verificationError})
+		return nil, &verificationError, err
 	}
-	verification := struct {
-		Domain *Domain
-		Error  *VerificationError
-	}{nil, nil}
-	err = json.NewDecoder(resp.Body).Decode(&verification)
+	domain := Domain{}
+	err = json.NewDecoder(resp.Body).Decode(&struct {
+		Domain Domain
+	}{domain})
 	if err != nil {
 		return nil, nil, err
 	}
-	return verification.Domain, verification.Error, nil
+	return &domain, nil, nil
 }
 
 // GetDomain will return specific information for one domain.
@@ -174,17 +157,20 @@ func (c Client) GetDomain(name string) (*Domain, *GetError, error) {
 		return nil, nil, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, nil, errors.New(resp.Status)
+		getError := GetError{}
+		err := json.NewDecoder(resp.Body).Decode(&struct {
+			Error GetError
+		}{getError})
+		return nil, &getError, err
 	}
-	verification := struct {
-		Domain *Domain
-		Error  *GetError
-	}{nil, nil}
-	err = json.NewDecoder(resp.Body).Decode(&verification)
+	domain := Domain{}
+	err = json.NewDecoder(resp.Body).Decode(&struct {
+		Domain Domain
+	}{domain})
 	if err != nil {
 		return nil, nil, err
 	}
-	return verification.Domain, verification.Error, nil
+	return &domain, nil, nil
 }
 
 // RemoveDomain will remove a domain from the ZEIT DNS server.
@@ -197,14 +183,14 @@ func (c Client) RemoveDomain(name string) (string, error) {
 	if resp.StatusCode != http.StatusOK {
 		return "", errors.New(resp.Status)
 	}
-	response := struct {
-		Uid string
-	}{}
-	err = json.NewDecoder(resp.Body).Decode(&response)
+	var uid string
+	err = json.NewDecoder(resp.Body).Decode(&struct {
+		Uid *string
+	}{&uid})
 	if err != nil {
 		return "", err
 	}
-	return response.Uid, nil
+	return uid, nil
 }
 
 // CheckDomainAvailability will check if the specified domain is available for sale.
@@ -217,14 +203,14 @@ func (c Client) CheckDomainAvailability(name string) (bool, error) {
 	if resp.StatusCode != http.StatusOK {
 		return false, errors.New(resp.Status)
 	}
-	response := struct {
-		Available bool
-	}{}
-	err = json.NewDecoder(resp.Body).Decode(&response)
+	var available bool
+	err = json.NewDecoder(resp.Body).Decode(&struct {
+		Available *bool
+	}{&available})
 	if err != nil {
 		return false, err
 	}
-	return response.Available, nil
+	return available, nil
 }
 
 // CheckDomainPrice will check how much a domain will cost to purchase and will return the price and period of purchase.
@@ -237,33 +223,44 @@ func (c Client) CheckDomainPrice(name string) (int, int, error) {
 	if resp.StatusCode != http.StatusOK {
 		return 0, 0, errors.New(resp.Status)
 	}
-	response := struct {
-		Price  int
-		Period int
-	}{}
-	err = json.NewDecoder(resp.Body).Decode(&response)
+	var price, period int
+	err = json.NewDecoder(resp.Body).Decode(&struct {
+		Price  *int
+		Period *int
+	}{&price, &period})
 	if err != nil {
 		return 0, 0, err
 	}
-	return response.Price, response.Period, nil
+	return price, period, nil
 }
 
 // BuyDomain will buy a domain name at the expectedPrice.
-func (c Client) BuyDomain(name string, expectedPrice int) error {
+func (c Client) BuyDomain(name string, expectedPrice int) (*BasicError, error) {
 	parameters := struct {
 		Name          string `json:"name"`
 		ExpectedPrice int    `json:"expectedPrice"`
 	}{name, expectedPrice}
 	body, err := json.Marshal(parameters)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	resp, err := c.makeAndDoRequest(http.MethodPost, "v4/domains/buy", bytes.NewBuffer(body))
 	if err != nil {
-		return err
+		return nil, err
+	}
+	if resp.StatusCode == http.StatusForbidden {
+		buyError := BasicError{}
+		err := json.NewDecoder(resp.Body).Decode(&struct {
+			Error BasicError
+		}{buyError})
+		if err != nil {
+			return nil, err
+		}
+		defer closeResponseBody(resp)
+		return &buyError, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return errors.New(resp.Status)
+		return nil, errors.New(resp.Status)
 	}
-	return nil
+	return nil, nil
 }

@@ -348,8 +348,9 @@ func TestClient_BuyDomain(t *testing.T) {
 		}
 
 		t.Run(domainName, func(t *testing.T) {
-			err := client.BuyDomain(domainName, expectedPrice)
+			buyError, err := client.BuyDomain(domainName, expectedPrice)
 			a.Nil(err, "Error should be nil")
+			a.Nil(buyError, "Buy Order should be successful")
 		})
 	}
 }
