@@ -2,6 +2,7 @@
 [![Build Status](https://travis-ci.com/kochie/zeit-api-go.svg?token=DyduaqJxsshHLt3JzTx3&branch=master)](https://travis-ci.com/kochie/zeit-api-go)
 [![GoDoc](https://godoc.org/github.com/kochie/zeit-api-go?status.svg)](https://godoc.org/github.com/kochie/zeit-api-go)
 [![Coverage Status](https://coveralls.io/repos/github/kochie/zeit-api-go/badge.svg?branch=master)](https://coveralls.io/github/kochie/zeit-api-go?branch=master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/kochie/zeit-api-go)](https://goreportcard.com/report/github.com/kochie/zeit-api-go)
 ```bash
 go get github.com/kochie/zeit-api-go
 ```
