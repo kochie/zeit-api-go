@@ -124,53 +124,59 @@ func (c Client) TransferInDomain(name, authCode string, expectedPrice int) (*Dom
 
 // VerifyDomain will check if the domain either has the correct nameservers for ZEIT defined or if the DNS TXT
 // verification is set.
-func (c Client) VerifyDomain(name string) (*Domain, *VerificationError, error) {
+func (c Client) VerifyDomain(name string) (*Domain, error) {
 	endpoint := fmt.Sprintf("v4/domains/%s/verify", name)
 	resp, err := c.makeAndDoRequest(http.MethodPost, endpoint, nil)
 	defer closeResponseBody(resp)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if resp.StatusCode != http.StatusOK {
 		verificationError := VerificationError{}
 		err := json.NewDecoder(resp.Body).Decode(&struct {
 			Error VerificationError
 		}{verificationError})
-		return nil, &verificationError, err
+		if err != nil {
+			return nil, err
+		}
+		return nil, verificationError
 	}
 	domain := Domain{}
 	err = json.NewDecoder(resp.Body).Decode(&struct {
 		Domain Domain
 	}{domain})
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	return &domain, nil, nil
+	return &domain, nil
 }
 
 // GetDomain will return specific information for one domain.
-func (c Client) GetDomain(name string) (*Domain, *GetError, error) {
+func (c Client) GetDomain(name string) (*Domain, error) {
 	endpoint := fmt.Sprintf("v4/domains/%s", name)
 	resp, err := c.makeAndDoRequest(http.MethodGet, endpoint, nil)
 	defer closeResponseBody(resp)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if resp.StatusCode != http.StatusOK {
 		getError := GetError{}
 		err := json.NewDecoder(resp.Body).Decode(&struct {
 			Error GetError
 		}{getError})
-		return nil, &getError, err
+		if err != nil {
+			return nil, err
+		}
+		return nil, getError
 	}
 	domain := Domain{}
 	err = json.NewDecoder(resp.Body).Decode(&struct {
 		Domain Domain
 	}{domain})
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	return &domain, nil, nil
+	return &domain, nil
 }
 
 // RemoveDomain will remove a domain from the ZEIT DNS server.
@@ -235,18 +241,18 @@ func (c Client) CheckDomainPrice(name string) (int, int, error) {
 }
 
 // BuyDomain will buy a domain name at the expectedPrice.
-func (c Client) BuyDomain(name string, expectedPrice int) (*BasicError, error) {
+func (c Client) BuyDomain(name string, expectedPrice int) error {
 	parameters := struct {
 		Name          string `json:"name"`
 		ExpectedPrice int    `json:"expectedPrice"`
 	}{name, expectedPrice}
 	body, err := json.Marshal(parameters)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	resp, err := c.makeAndDoRequest(http.MethodPost, "v4/domains/buy", bytes.NewBuffer(body))
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if resp.StatusCode == http.StatusForbidden {
 		buyError := BasicError{}
@@ -254,13 +260,13 @@ func (c Client) BuyDomain(name string, expectedPrice int) (*BasicError, error) {
 			Error BasicError
 		}{buyError})
 		if err != nil {
-			return nil, err
+			return err
 		}
 		defer closeResponseBody(resp)
-		return &buyError, err
+		return buyError
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(resp.Status)
+		return errors.New(resp.Status)
 	}
-	return nil, nil
+	return nil
 }

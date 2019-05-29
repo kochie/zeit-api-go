@@ -8,22 +8,23 @@ type BasicError struct {
 	Message string `json:"message"`
 }
 
+func (e BasicError) Error() string {
+	return e.Message
+}
+
 type ConflictError struct {
-	Code    string   `json:"code"`
-	Message string   `json:"message"`
-	OldId   string   `json:"oldId"`
-	OldIds  []string `json:"oldIds"`
+	BasicError
+	OldId  string   `json:"oldId"`
+	OldIds []string `json:"oldIds"`
 }
 
 type GetError struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
-	Name    string `json:"name"`
+	BasicError
+	Name string `json:"name"`
 }
 
 type VerificationError struct {
-	Code           string `json:"code"`
-	Message        string `json:"message"`
+	BasicError
 	Name           string `json:"name"`
 	NsVerification struct {
 		Name                string   `json:"name"`
@@ -38,9 +39,8 @@ type VerificationError struct {
 }
 
 type RateLimitError struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
-	Limit   struct {
+	BasicError
+	Limit struct {
 		Total     int
 		Remaining int
 		Reset     int64

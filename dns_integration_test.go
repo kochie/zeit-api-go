@@ -54,9 +54,8 @@ func TestClient_Integration_CreateDNSRecord(t *testing.T) {
 	for _, domain := range domains {
 		for _, record := range records {
 			t.Run(fmt.Sprintf("%s_%s_%s_%s", domain, record.Name, record.Type, record.GetValue()), func(t *testing.T) {
-				uuid, createError, err := client.CreateDNSRecord(domain, &record)
+				uuid, err := client.CreateDNSRecord(domain, &record)
 				a.Nil(err, "Error should be nil")
-				a.Nil(createError, "Should not fail to create record")
 				a.NotNil(uuid, "records should be defined")
 
 				actualRecords, err := client.ListDNSRecords(domain)
@@ -82,9 +81,8 @@ func TestClient_Integration_RemoveDNSRecord(t *testing.T) {
 	for _, domain := range domains {
 		for _, record := range records {
 			t.Run(fmt.Sprintf("%s_%s_%s_%s", domain, record.Name, record.Type, record.GetValue()), func(t *testing.T) {
-				uuid, createError, err := client.CreateDNSRecord(domain, &record)
+				uuid, err := client.CreateDNSRecord(domain, &record)
 				a.Nil(err, "Error should be nil")
-				a.Nil(createError, "Should not fail to create record")
 				a.NotNil(uuid, "records should be defined")
 
 				err = client.RemoveDNSRecord(domain, uuid)

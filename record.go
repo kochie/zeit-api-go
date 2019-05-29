@@ -2,7 +2,6 @@ package zeit
 
 import (
 	"fmt"
-	"strings"
 )
 
 const (
@@ -38,10 +37,6 @@ func (r *Record) GetValue() string {
 	case RecordTypeMX:
 		{
 			return fmt.Sprintf("%s %s", r.MxPriority, r.Value)
-		}
-	case RecordTypeALIAS:
-		{
-			return strings.TrimSuffix(r.Value, ".")
 		}
 	default:
 		return r.Value

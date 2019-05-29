@@ -2,6 +2,8 @@ package zeit
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/golang/mock/gomock"
 	"github.com/kochie/zeit-api-go/mocks"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +31,7 @@ func TestClient_ListDNSRecords(t *testing.T) {
 		}{records})
 		a.Nil(err)
 
-		httpResponse := makeResponse(response)
+		httpResponse := makeResponse(response, http.StatusOK)
 		mockHttpClient.EXPECT().Do(gomock.Any()).Return(&httpResponse, nil)
 
 		client := Client{
@@ -83,7 +85,7 @@ func TestClient_CreateDNSRecord(t *testing.T) {
 		}{record.Id})
 		a.Nil(err)
 
-		httpResponse := makeResponse(response)
+		httpResponse := makeResponse(response, http.StatusOK)
 		mockHttpClient.EXPECT().Do(gomock.Any()).Return(&httpResponse, nil)
 
 		client := Client{
@@ -95,59 +97,79 @@ func TestClient_CreateDNSRecord(t *testing.T) {
 		}
 
 		t.Run(domainName, func(t *testing.T) {
-			uid, conflictError, err := client.CreateDNSRecord(domainName, record)
+			uid, err := client.CreateDNSRecord(domainName, record)
 			a.Nil(err, "Error should be nil")
-			a.Nil(conflictError, "Should not have a conflict")
 			a.NotNil(uid, "uid should be defined")
 			a.Equal(record.Id, uid, "uid should be the same")
 		})
 	}
 
-	incorrectDomainRecords := []struct {
-		origin      string
-		record      *Record
-		errorString string
-		mock        bool
+	badRequests := []struct {
+		domain     string
+		response   error
+		statusCode int
+		record     *Record
 	}{
-		{"test.com", &Record{
+		{
+			"www.test.com",
+			BasicError{},
+			http.StatusBadRequest,
+			&Record{},
+		},
+		{
+			"foo.test.com",
+			ConflictError{},
+			http.StatusConflict,
+			&Record{},
+		},
+		{
+			"foo.test.com",
+			BasicError{
+				"invalid_value",
+				"Invalid record value: \"0 issue letsencrypt.org\"",
+			},
+			http.StatusBadRequest,
+			&Record{},
+		},
+		{"test.com", errors.New(ErrorOrigin), -1, &Record{
 			Name:  "@",
 			Type:  RecordTypeCNAME,
 			Value: "test.com",
 			Id:    "123456",
-		}, ErrorOrigin, false},
-		{"www.test.com", &Record{
+		}},
+		{"www.test.com", errors.New(ErrorOrigin), -1, &Record{
 			Name:  "@",
 			Type:  RecordTypeCNAME,
 			Value: "test.com",
 			Id:    "123456",
-		}, ErrorOrigin, false},
-		{"test.com", nil, ErrorNilRecord, false},
-		{"www.test.com", nil, ErrorNilRecord, false},
+		}},
+		{"test.com", errors.New(ErrorNilRecord), -1, nil},
+		{"www.test.com", errors.New(ErrorNilRecord), -1, nil},
 	}
 
-	for _, incorrectDomain := range incorrectDomainRecords {
-		if incorrectDomain.mock {
-			response, err := json.Marshal(&struct {
-				Uid string `json:"uid"`
-			}{incorrectDomain.record.Id})
-			a.Nil(err)
+	for _, badRequest := range badRequests {
+		t.Run(fmt.Sprintf("%s_%d", badRequest.domain, badRequest.statusCode), func(t *testing.T) {
+			if badRequest.statusCode > 0 {
+				response, err := json.Marshal(&struct {
+					Error error
+				}{badRequest.response})
+				a.Nil(err, "should create response")
 
-			httpResponse := makeResponse(response)
-			mockHttpClient.EXPECT().Do(gomock.Any()).Return(&httpResponse, nil)
-		}
+				httpResponse := makeResponse(response, badRequest.statusCode)
+				mockHttpClient.EXPECT().Do(gomock.Any()).Return(&httpResponse, nil)
+			}
 
-		client := Client{
-			TestToken,
-			rootUrl,
-			mockHttpClient,
-			&rateLimit{},
-			"",
-		}
+			client := Client{
+				TestToken,
+				rootUrl,
+				mockHttpClient,
+				&rateLimit{},
+				"",
+			}
 
-		t.Run(incorrectDomain.origin, func(t *testing.T) {
-			uid, conflictError, err := client.CreateDNSRecord(incorrectDomain.origin, incorrectDomain.record)
-			a.Error(err, incorrectDomain.errorString)
-			a.Nil(conflictError, "Should not have a conflict")
+			uid, err := client.CreateDNSRecord(badRequest.domain, badRequest.record)
+			a.Error(err, badRequest.response.Error())
+			a.IsType(badRequest.response, err)
 			a.Empty(uid, "uid should be empty")
 		})
 	}

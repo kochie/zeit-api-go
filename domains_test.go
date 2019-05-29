@@ -16,15 +16,15 @@ var TestToken = os.Getenv("NOW_TEST_TOKEN")
 
 const rootUrl = "https://zeit.api.co"
 
-func makeResponse(response []byte) http.Response {
+func makeResponse(response []byte, statusCode int) http.Response {
 	header := http.Header{}
-	header.Set("X-RateLimit-remaining", "10")
-	header.Set("X-RateLimit-limit", "10")
-	header.Set("X-RateLimit-reset", "0")
+	header.Set("X-RateLimit-Remaining", "10")
+	header.Set("X-RateLimit-Limit", "10")
+	header.Set("X-RateLimit-Reset", "0")
 	httpResponse := http.Response{
 		Header:     header,
 		Body:       ioutil.NopCloser(bytes.NewBuffer(response)),
-		StatusCode: http.StatusOK,
+		StatusCode: statusCode,
 	}
 	return httpResponse
 }
@@ -40,7 +40,7 @@ func TestClient_GetAllDomains(t *testing.T) {
 	}{testDomains})
 	a.Nil(err)
 
-	httpResponse := makeResponse(response)
+	httpResponse := makeResponse(response, http.StatusOK)
 
 	mockHttpClient := mocks.NewMockHttpClient(ctrl)
 	mockHttpClient.EXPECT().Do(gomock.Any()).Return(&httpResponse, nil)
@@ -78,7 +78,7 @@ func TestClient_AddDomain(t *testing.T) {
 	}
 
 	for _, domainName := range domainNames {
-		httpResponse := makeResponse(response)
+		httpResponse := makeResponse(response, http.StatusOK)
 		mockHttpClient.EXPECT().Do(gomock.Any()).Return(&httpResponse, nil)
 
 		client := Client{
@@ -116,7 +116,7 @@ func TestClient_TransferInDomain(t *testing.T) {
 	}
 
 	for _, domainName := range domainNames {
-		httpResponse := makeResponse(response)
+		httpResponse := makeResponse(response, http.StatusOK)
 		mockHttpClient.EXPECT().Do(gomock.Any()).Return(&httpResponse, nil)
 
 		client := Client{
@@ -153,7 +153,7 @@ func TestClient_VerifyDomain(t *testing.T) {
 		}{domain})
 		a.Nil(err)
 
-		httpResponse := makeResponse(response)
+		httpResponse := makeResponse(response, http.StatusOK)
 		mockHttpClient.EXPECT().Do(gomock.Any()).Return(&httpResponse, nil)
 
 		client := Client{
@@ -165,9 +165,8 @@ func TestClient_VerifyDomain(t *testing.T) {
 		}
 
 		t.Run(domainName, func(t *testing.T) {
-			domain, verificationError, err := client.VerifyDomain(domainName)
+			domain, err := client.VerifyDomain(domainName)
 			a.Nil(err, "Error should be nil")
-			a.Nil(verificationError, "Verification error should be nil")
 			a.NotNil(domain, "Domain list should be defined")
 		})
 	}
@@ -191,7 +190,7 @@ func TestClient_GetDomain(t *testing.T) {
 		}{testDomain})
 		a.Nil(err)
 
-		httpResponse := makeResponse(response)
+		httpResponse := makeResponse(response, http.StatusOK)
 		mockHttpClient.EXPECT().Do(gomock.Any()).Return(&httpResponse, nil)
 
 		client := Client{
@@ -203,9 +202,8 @@ func TestClient_GetDomain(t *testing.T) {
 		}
 
 		t.Run(domainName, func(t *testing.T) {
-			domain, getError, err := client.GetDomain(domainName)
+			domain, err := client.GetDomain(domainName)
 			a.Nil(err, "Error should be nil")
-			a.Nil(getError, "Get error should be nil")
 			a.NotNil(domain, "Domain list should be defined")
 			a.Equal(testDomain, *domain, "Domain should be equal")
 		})
@@ -231,7 +229,7 @@ func TestClient_RemoveDomain(t *testing.T) {
 	}
 
 	for _, domainName := range domainNames {
-		httpResponse := makeResponse(response)
+		httpResponse := makeResponse(response, http.StatusOK)
 		mockHttpClient.EXPECT().Do(gomock.Any()).Return(&httpResponse, nil)
 
 		client := Client{
@@ -267,7 +265,7 @@ func TestClient_CheckDomainAvailability(t *testing.T) {
 			Available bool `json:"available"`
 		}{available})
 		a.Nil(err)
-		httpResponse := makeResponse(response)
+		httpResponse := makeResponse(response, http.StatusOK)
 		mockHttpClient.EXPECT().Do(gomock.Any()).Return(&httpResponse, nil)
 
 		client := Client{
@@ -304,7 +302,7 @@ func TestClient_CheckDomainPrice(t *testing.T) {
 			Period int `json:"period"`
 		}{domainValue[0], domainValue[1]})
 		a.Nil(err)
-		httpResponse := makeResponse(response)
+		httpResponse := makeResponse(response, http.StatusOK)
 		mockHttpClient.EXPECT().Do(gomock.Any()).Return(&httpResponse, nil)
 
 		client := Client{
@@ -348,9 +346,8 @@ func TestClient_BuyDomain(t *testing.T) {
 		}
 
 		t.Run(domainName, func(t *testing.T) {
-			buyError, err := client.BuyDomain(domainName, expectedPrice)
+			err := client.BuyDomain(domainName, expectedPrice)
 			a.Nil(err, "Error should be nil")
-			a.Nil(buyError, "Buy Order should be successful")
 		})
 	}
 }
