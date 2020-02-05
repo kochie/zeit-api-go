@@ -47,7 +47,7 @@ type Domain struct {
 	Certs               []Certs   `json:"certs,omitempty"`
 }
 
-// GetAllDomains will return a slice of domains registered with the user.
+// ListAllDomains will return a slice of domains registered with the user.
 func (c Client) ListAllDomains() ([]Domain, error) {
 	resp, err := c.makeAndDoRequest(http.MethodGet, "v4/domains", nil)
 	if err != nil {

@@ -22,7 +22,7 @@ func main(){
 	zeitClient := zeit.NewClient(token)
 	zeitClient.Team("team name") // Team name can be optionally set
 	
-	domains, err := zeitClient.GetAllDomains()
+	domains, err := zeitClient.ListAllDomains()
 	if err != nil {
 		fmt.Println(err.Error())
 	}

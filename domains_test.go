@@ -29,7 +29,7 @@ func makeResponse(response []byte, statusCode int) http.Response {
 	return httpResponse
 }
 
-func TestClient_GetAllDomains(t *testing.T) {
+func TestClient_ListAllDomains(t *testing.T) {
 	a := assert.New(t)
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
